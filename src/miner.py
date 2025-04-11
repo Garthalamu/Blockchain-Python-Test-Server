@@ -21,7 +21,7 @@ def miner(timestamp_offset=0):
     
     while len(latest_transactions := requests.get('http://localhost:5000/transaction/pending').json()['transactions']) < 1:
         print("No transactions in mempool, waiting...")
-        sleep(5) # Wait for at least 3 transactions in the mempool
+        sleep(10) # Wait for at least 3 transactions in the mempool
         
     print(f"Found {len(latest_transactions)} transactions in mempool.  Mining...")
     
