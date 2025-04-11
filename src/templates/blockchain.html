@@ -1,52 +1,157 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blockchain Live</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script>
-        async function fetchBlockchain() {
-        const response = await fetch('/blockchain/live');
-        const data = await response.json();
-    
-        const list = document.getElementById('block-list');
-        const count = document.getElementById('block-count');
-    
-        count.innerText = `Total Blocks: ${data.count}`;
-        list.innerHTML = '';
-    
-        data.blockchain.reverse().forEach(block => {
-            const card = document.createElement('div');
-            card.className = 'card mb-3 shadow-sm';
-    
-            const body = document.createElement('div');
-            body.className = 'card-body';
-    
-            body.innerHTML = `
-            <h5 class="card-title">Block #${block.index}</h5>
-            <p class="card-text">
-                <span class="badge bg-primary">Nonce: ${block.nonce}</span>
-                <span class="badge bg-success">Txs: ${block.transactions.length}</span>
-                <span class="badge bg-warning text-dark">Bits: ${block.bits}</span>
-            </p>
-            <p class="card-text"><small class="text-muted">Time: ${new Date(block.timestamp * 1000).toLocaleString()}</small></p>
-            <p class="card-text"><code style="font-size: 0.8rem">${block.hash}</code></p>
-            `;
-    
-            card.appendChild(body);
-            list.appendChild(card);
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blockchain Timeline</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f1f3f5;
+      font-family: system-ui, sans-serif;
+    }
+
+    .timeline-entry {
+      position: relative;
+      border-left: 3px solid #dee2e6;
+      padding-left: 2rem;
+      margin-left: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .timeline-entry::before {
+      content: '';
+      position: absolute;
+      left: -0.65rem;
+      top: 0.3rem;
+      width: 1rem;
+      height: 1rem;
+      background-color: #0d6efd;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 0 3px #dee2e6;
+    }
+
+    .block-card {
+      background-color: #fff;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .block-header {
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: #0d6efd;
+    }
+
+    .block-meta {
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .block-meta .badge {
+      font-size: 0.7rem;
+      margin-right: 0.3rem;
+    }
+
+    .block-time {
+      font-size: 0.8rem;
+      color: #6c757d;
+    }
+
+    .block-hash {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #495057;
+      word-break: break-word;
+      margin-top: 0.5rem;
+    }
+
+    a.link-secondary {
+      text-decoration: none;
+    }
+
+    a.link-secondary:hover {
+      text-decoration: underline;
+    }
+  </style>
+
+  <script>
+    async function fetchBlockchain() {
+      const response = await fetch('/blockchain/live');
+      const data = await response.json();
+
+      const list = document.getElementById('timeline');
+      const count = document.getElementById('block-count');
+      
+      count.innerText = `Total Blocks: ${data.count}`;
+      list.innerHTML = '';
+      document.getElementById('avg-block-time').innerText = data.stats.avg_block_time;
+        document.getElementById('avg-txs').innerText = data.stats.avg_txs;
+        document.getElementById('avg-btc').innerText = data.stats.avg_btc;
+
+      data.blockchain.reverse().forEach(block => {
+        const entry = document.createElement('div');
+        entry.className = 'timeline-entry';
+
+        const localTime = new Date(block.timestamp * 1000).toLocaleString();
+
+        let totalBTC = 0;
+        block.transactions.forEach(tx => {
+          totalBTC += tx.amount || 0;
         });
-        }
-    
-        setInterval(fetchBlockchain, 3000);
-        window.onload = fetchBlockchain;
-    </script>
+        totalBTC = totalBTC.toFixed(8);
+
+        const blockSizeBytes = new TextEncoder().encode(JSON.stringify(block)).length;
+        const blockSizeKB = (blockSizeBytes / 1024).toFixed(2);
+
+        entry.innerHTML = `
+          <div class="block-card">
+            <div class="block-header">🧱 Block #${block.index}</div>
+            <div class="block-meta mt-2">
+              <span class="badge bg-secondary">Nonce: ${block.nonce}</span>
+              <span class="badge bg-primary">Txs: ${block.transactions.length}</span>
+              <span class="badge bg-success">Total: ${totalBTC} BTC</span>
+              <span class="badge bg-info text-dark">Size: ${blockSizeKB} KB</span>
+            </div>
+            <div class="block-time mt-2">⏰ ${localTime}</div>
+            <div class="block-hash">🔗 <a href="/block/${block.hash}" class="link-secondary">${block.hash}</a></div>
+          </div>
+        `;
+
+        list.appendChild(entry);
+      });
+    }
+
+    setInterval(fetchBlockchain, 3000);
+    window.onload = fetchBlockchain;
+  </script>
 </head>
-<body class="bg-light">
-    <div class="container py-4">
-        <h1 class="mb-4">🚀 Live Blockchain</h1>
-        <h4 id="block-count" class="mb-4 text-muted">Loading...</h4>
-        <div id="block-list"></div>
+<body>
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="fw-bold text-primary m-0">📜 Blockchain Timeline</h1>
+        <a href="/mempool" target="_blank" class="btn btn-outline-primary">
+          🔍 View Mempool
+        </a>
+      </div>
+      <div class="mb-4 p-3 bg-white shadow-sm rounded">
+          <h5 class="mb-3 text-primary">📈 Blockchain Stats</h5>
+          <div class="row">
+              <div class="col-md-4">
+                  ⏱ <strong>Avg Block Time:</strong> <span id="avg-block-time">Loading...</span> sec
+                </div>
+                <div class="col-md-4">
+                    📦 <strong>Avg TXs per Block:</strong> <span id="avg-txs">Loading...</span>
+                </div>
+                <div class="col-md-4">
+                    💰 <strong>Avg BTC per Block:</strong> <span id="avg-btc">Loading...</span>
+                </div>
+            </div>
+        </div>      
+        <h6 id="block-count" class="text-muted mb-4">Loading...</h6>
+        <div id="timeline"></div>
     </div>
-    </body>      
+</body>
 </html>

@@ -9,9 +9,21 @@ class Transaction:
         self.recipient = recipient
         self.amount = amount
         self.timestamp = timestamp or time.time()
+        self.hash = self.calculate_hash()
         
     def to_dict(self):
         return self.__dict__
+    
+    def calculate_hash(self):
+        data = {
+            'sender': self.sender,
+            'recipient': self.recipient,
+            'amount': self.amount,
+            'timestamp': self.timestamp
+        }
+        tx_string = json.dumps(data, sort_keys=True).encode()
+        hash = sha256d(tx_string)
+        return hash
     
     def __repr__(self):
         return json.dumps(self.to_dict(), indent=2)

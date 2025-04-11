@@ -41,7 +41,7 @@ def generate_transactions(num_transactions=10):
         })
         print(response.json())
         
-        sleep(random.uniform(0.1, 2.0))  # Random delay between transactions
+        sleep(random.uniform(0.1, 1.2))  # Random delay between transactions
         
 if __name__ == '__main__':
     while True:

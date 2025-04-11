@@ -1,12 +1,16 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from blockchain import Blockchain, Block, Transaction
-import time
+import datetime
 
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def index():
     return jsonify({"message": "Welcome to the Blockchain API!"}), 200
+
+@app.template_filter('datetime')
+def format_datetime(value):
+    return datetime.datetime.fromtimestamp(value).strftime('%Y-%m-%d %H:%M:%S')
 
 # Add a new transaction
 @app.route('/transaction/new', methods=['POST'])
@@ -77,12 +81,57 @@ def mempool_live_data():
 def blockchain_page():
     return render_template('blockchain.html')
 
-@app.route('/blockchain/live', methods=['GET'])
-def blockchain_live_data():
+@app.route('/blockchain/live')
+def blockchain_live():
+    chain = blockchain.chain
+
+    if len(chain) < 2:
+        return jsonify({
+            'count': len(chain),
+            'blockchain': [block.to_dict() for block in chain],
+            'stats': {
+                'avg_block_time': 0,
+                'avg_txs': 0,
+                'avg_btc': 0
+            }
+        })
+
+    time_diffs = []
+    tx_counts = []
+    btc_totals = []
+
+    for i in range(1, len(chain)):
+        prev = chain[i - 1]
+        curr = chain[i]
+        time_diffs.append(curr.timestamp - prev.timestamp)
+        tx_counts.append(len(curr.transactions))
+
+        total_btc = 0
+        for tx in curr.transactions:
+            total_btc += tx.get('amount', 0)
+        btc_totals.append(total_btc)
+
+    avg_block_time = round(sum(time_diffs) / len(time_diffs), 2)
+    avg_txs = round(sum(tx_counts) / len(tx_counts), 2)
+    avg_btc = round(sum(btc_totals) / len(btc_totals), 8)
+
     return jsonify({
-        'blockchain': [block.to_dict() for block in blockchain.chain],
-        'count': len(blockchain.chain)
+        'count': len(chain),
+        'blockchain': [block.to_dict() for block in chain],
+        'stats': {
+            'avg_block_time': avg_block_time,
+            'avg_txs': avg_txs,
+            'avg_btc': avg_btc
+        }
     })
+
+    
+@app.route('/block/<block_hash>')
+def view_block(block_hash):
+    for block in blockchain.chain:
+        if block.hash == block_hash:
+            return render_template('block_detail.html', block=block)
+    return "Block not found", 404
     
 @app.route('/transaction/create', methods=['GET'])
 def transaction_form():
@@ -107,7 +156,7 @@ def submit_transaction():
 
 if __name__ == '__main__':
     print('Creating the blockchain...')
-    blockchain = Blockchain(difficulty=4)
+    blockchain = Blockchain(difficulty=5)
     print('Genesis block created.')
     print('Starting the Flask server...')
-    app.run(debug=False, port=5000)
+    app.run(debug=True, port=5000)
