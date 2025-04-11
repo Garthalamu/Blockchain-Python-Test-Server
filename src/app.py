@@ -3,7 +3,6 @@ from blockchain import Blockchain, Block, Transaction
 import time
 
 app = Flask(__name__)
-blockchain = Blockchain(difficulty=6)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -68,4 +67,8 @@ def get_blockchain():
     return jsonify({"chain": chain}), 200
 
 if __name__ == '__main__':
-    app.run(debug=False, port=5000)
+    print('Creating the blockchain...')
+    blockchain = Blockchain(difficulty=5)
+    print('Genesis block created.')
+    print('Starting the Flask server...')
+    app.run(debug=True, port=5000)

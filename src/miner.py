@@ -6,7 +6,7 @@ import time
 from blockchain import Blockchain, Block, Transaction
 
 
-def miner():
+def miner(timestamp_offset=0):
     # Get the last block
     latest_block = requests.get('http://localhost:5000/block/last').json()['block']
     latest_block = Block(
@@ -35,7 +35,7 @@ def miner():
     new_block = Block(
         index=blockchain.get_last_block().index + 1,
         transactions=transactions,
-        timestamp=time.time(),
+        timestamp=time.time() + timestamp_offset,
         previous_hash=latest_block.hash,
         difficulty=blockchain.difficulty
     )
@@ -51,9 +51,11 @@ def miner():
         print("Failed to add block:", response.json())
 
 if __name__ == '__main__':
+    time_offset = int(input("Enter time offset in seconds (default 0): "))
+    
     while True:
         try:
-            miner()
+            miner(time_offset)
         except Exception as e:
             print(f"Error: {e}")
             sleep(5)
