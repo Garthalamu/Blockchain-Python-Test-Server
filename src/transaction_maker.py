@@ -32,7 +32,7 @@ def generate_transactions(num_transactions=10):
     for _ in range(num_transactions):
         sender = random.choice(people)
         recipient = random.choice(people)
-        amount = random.randint(1, 1000)
+        amount = round(random.uniform(0.00001, 10.0), 5)
         
         response = requests.post('http://localhost:5000/transaction/new', json={
             'sender': sender,

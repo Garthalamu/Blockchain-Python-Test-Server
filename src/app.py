@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from blockchain import Blockchain, Block, Transaction
 import time
 
@@ -83,6 +83,27 @@ def blockchain_live_data():
         'blockchain': [block.to_dict() for block in blockchain.chain],
         'count': len(blockchain.chain)
     })
+    
+@app.route('/transaction/create', methods=['GET'])
+def transaction_form():
+    return render_template('create_transaction.html')
+
+@app.route('/transaction/create', methods=['POST'])
+def submit_transaction():
+    sender = request.form.get('sender')
+    recipient = request.form.get('recipient')
+    amount = request.form.get('amount')
+
+    if not sender or not recipient or not amount:
+        return "Missing fields", 400
+
+    try:
+        amount = round(float(amount), 8)
+        tx = Transaction(sender, recipient, amount)
+        blockchain.add_transaction(tx)
+        return redirect(url_for('mempool_page'))
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 if __name__ == '__main__':
     print('Creating the blockchain...')
