@@ -40,8 +40,7 @@ def miner(timestamp_offset=0):
         difficulty=blockchain.difficulty
     )
     new_block.mine()
-    
-    print(new_block.to_dict())
+    print(f"New block mined with nonce: {new_block.nonce} and hash: {new_block.hash}")
     
     # Submit the new block to the blockchain
     response = requests.post('http://localhost:5000/block/new', json=new_block.to_dict())
