@@ -14,14 +14,14 @@
             count.innerText = `Total Blocks: ${data.count}`;
             list.innerHTML = '';
 
-            data.blockchain.forEach(block => {
+            data.blockchain.reverse().forEach(block => {
                 const li = document.createElement('li');
                 li.textContent = `Block #${block.index} - Hash: ${block.hash} - Transactions: ${block.transactions.length} - Nonce: ${block.nonce}`;
                 list.appendChild(li);
             });
         }
 
-        setInterval(fetchBlockchain, 2000); // Fetch every 2 seconds
+        setInterval(fetchBlockchain, 3000); // Fetch every 3 seconds
         window.onload = fetchBlockchain; // Fetch on load
     </script>
 </head>
