@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 from blockchain import Blockchain, Block, Transaction
 import time
 
@@ -60,15 +60,33 @@ def get_last_block():
     last_block = blockchain.get_last_block().to_dict()
     return jsonify({"block": last_block}), 200
 
-# View the entire blockchain
+# Visual representation of the transactions
+@app.route('/mempool', methods=['GET'])
+def mempool_page():
+    return render_template('mempool.html')
+
+@app.route('/mempool/live', methods=['GET'])
+def mempool_live_data():
+    return jsonify({
+        'mempool': blockchain.mempool,
+        'count': len(blockchain.mempool)
+    })
+    
+# Visual representation of the blockchain
 @app.route('/blockchain', methods=['GET'])
-def get_blockchain():
-    chain = [block.to_dict() for block in blockchain.chain]
-    return jsonify({"chain": chain}), 200
+def blockchain_page():
+    return render_template('blockchain.html')
+
+@app.route('/blockchain/live', methods=['GET'])
+def blockchain_live_data():
+    return jsonify({
+        'blockchain': [block.to_dict() for block in blockchain.chain],
+        'count': len(blockchain.chain)
+    })
 
 if __name__ == '__main__':
     print('Creating the blockchain...')
-    blockchain = Blockchain(difficulty=5)
+    blockchain = Blockchain(difficulty=4)
     print('Genesis block created.')
     print('Starting the Flask server...')
     app.run(debug=False, port=5000)

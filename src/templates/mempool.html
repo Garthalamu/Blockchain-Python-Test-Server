@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mempool</title>
+    <script>
+        async function fetchMempool() {
+            const response = await fetch('/mempool/live');
+            const data = await response.json();
+
+            const list = document.getElementById('tx-list');
+            const count = document.getElementById('tx-count');
+
+            count.innerText = `Pending Transactions: ${data.count}`;
+            list.innerHTML = '';
+
+            data.mempool.forEach(tx => {
+                const li = document.createElement('li');
+                li.textContent = `${tx.sender} -> ${tx.recipient}: ${tx.amount} BTC`;
+                list.appendChild(li);
+            });
+        }
+
+        setInterval(fetchMempool, 2000); // Fetch every 2 seconds
+        window.onload = fetchMempool; // Fetch on load
+    </script>
+</head>
+<body>
+    <h1>Live Mempool</h1>
+    <h2 id="tx-count">Loading...</h2>
+    <ul id="tx-list"></ul>
+</body>
+</html>
